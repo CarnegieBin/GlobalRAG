@@ -8,28 +8,21 @@ To foster **global planning** and **reliable execution**, the framework introduc
 Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRAG** extends its **multi-hop reasoning** capabilities with a **structured reinforcement signal** that explicitly models planning quality.
 
 <p align="center">
-          🤗 <a href="https://huggingface.co/datasets/Carnegie-Bin/GlobalRAG-data">Models</a>&nbsp&nbsp | &nbsp&nbsp📑 <a href="https://arxiv.org/abs/2510.20548">Paper</a>&nbsp&nbsp ｜ 📊 <a href="https://huggingface.co/datasets/Carnegie-Bin/GlobalRAG-data">Datasets</a>&nbsp&nbsp 
+          🤗 <a href="https://huggingface.co/datasets/Carnegie-Bin/GlobalRAG-data">Models</a>&nbsp&nbsp | &nbsp&nbsp📑 <a href="https://arxiv.org/abs/2510.20548">Paper</a>&nbsp&nbsp 
 </p>
 
 
 ## ⭐️&nbsp;Features
 
-<table style="width:100%; table-layout:fixed;">
-<tr>
-<td style="vertical-align:top; width:50%; padding-right:20px;">
 
 - 📝 **Propose a question-answering paradigm**  
     - Explicitly demonstrates **global planning**  
     - Enables the model to **learn to plan before retrieving information**
 <br>
-<br>
-<br>
 
 - 🧩 **Enhancing multi-hop question answering**  
     - Integrates **dense process supervision signals**  
     - Utilizes **reinforcement learning techniques** to improve reasoning**
-<br>
-<br>
 <br>
 
 - 📈 **Performance improvements**  
@@ -37,12 +30,11 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     - Evaluated on multi-hop QA datasets: **2Wiki, HotpotQA, Musique, Bamboogle, Wikihop**
 
 
-</td>
-<td style="vertical-align:top; width:50%; text-align:left;">
-<img src="public/description.png" style="width:50%; height:50%;">
-</td>
-</tr>
-</table>
+<p align="center">
+  <img src="public/description.png" alt="description" />
+</p>
+
+
 
 
 <p align="center">
@@ -118,8 +110,12 @@ gzip -d $save_path/wiki-18.jsonl.gz
 ```
 
 (2) Process the dataset for training.
+
+First, download the original dataset from Hugging Face: [https://huggingface.co/datasets/GenIRAG/PER-PSE
+] and place it in the ```GlobalRAG-data``` directory. 
+Then, run the following script to generate the training data:
 ```bash
-hf download Carnegie-Bin/GlobalRAG-data --local-dir Carnegie-Bin/GlobalRAG-data
+python scripts/data.py
 ```
 
 (3) Launch a local retrieval server.
@@ -141,7 +137,13 @@ conda activate retriever
 bash retrieval_launch.sh
 ```
 
-(2) Run inference.
+(2) Processing Data.
+
+For evaluating the model, you should prepare the test data in the same format as Search-R1. 
+However, make sure to exclude any samples that are part of the training set, including, 
+for example, the development portion of datasets like HotpotQA, since some of these were already used for training.
+
+(3) Run inference.
 ```bash
 conda activate globalrag
 python scripts/eval_grpo_3B.sh

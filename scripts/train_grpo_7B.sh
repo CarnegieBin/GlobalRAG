@@ -1,20 +1,18 @@
-data_name=multi_hop_qa
-
 export DATA_DIR=GlobalRAG-data
 
-WAND_PROJECT="Search-R1-4A800"
+WAND_PROJECT="GlobalRAG-4A800"
 
 
 export WANDB_MODE=offline
 export BASE_MODEL=/path/to/your/target-train-model
-export EXPERIMENT_NAME=${data_name}-search-r1-grpo-wo_weight_decay-$(date +"%Y-%m-%d")
+export EXPERIMENT_NAME="Your Exp name"
 export embedding_model_path=/path/to/your/e5-base-v2
 
 export VLLM_ATTENTION_BACKEND=XFORMERS # vllm + qwen2-7b with flash_attn has some issues
 
 PYTHONUNBUFFERED=1 python3 -m verl.trainer.main_ppo \
     data.train_files="[$DATA_DIR/train.parquet]" \
-    data.val_files="[$DATA_DIR/musique.parquet,$DATA_DIR/bamboogle.parquet,$DATA_DIR/2WikiMultihopQA.parquet,$DATA_DIR/wikihop.parquet]" \
+    data.val_files=$DATA_DIR/musique.parquet \
     data.train_data_num=null \
     data.val_data_num=null \
     data.train_batch_size=128 \

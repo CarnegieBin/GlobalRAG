@@ -1,22 +1,19 @@
-data_name=multi_hop_qa
 
-export CUDA_VISIBLE_DEVICES=2,3,4,6
-export TRAIN_DATA_DIR=data/exp_data_0911/train
-export TEST_DATA_DIR=data/exp_data_0911/validation
+export DATA_DIR=GlobalRAG-data
 
-WAND_PROJECT="Search-R1-4A800"
-# 关闭WANDB
+WAND_PROJECT="GlobalRAG-4A800"
+
+
 export WANDB_MODE=offline
-export BASE_MODEL='/home/ssd3/jchluo/llm_models/Qwen2.5-3B-Instruct'
-export EXPERIMENT_NAME=${data_name}-search-r1-grpo-wo_weight_decay-$(date +"%Y-%m-%d")
-export embedding_model_path=./e5
+export BASE_MODEL=/path/to/your/trained-model
+export EXPERIMENT_NAME="Your Exp name"
+export embedding_model_path=/path/to/your/e5-base-v2
 
-# set -x
 export VLLM_ATTENTION_BACKEND=XFORMERS # vllm + qwen2-7b with flash_attn has some issues
 
 PYTHONUNBUFFERED=1 python3 -m verl.trainer.main_ppo \
-    data.train_files="[$TRAIN_DATA_DIR/merged_train_wanfan.parquet]" \
-    data.val_files="[$TEST_DATA_DIR/musique_wf.parquet,$TEST_DATA_DIR/bamboogle_wf.parquet,$TEST_DATA_DIR/2WikiMultihopQA_500_wf.parquet,$TEST_DATA_DIR/MultihopRAG_wf.parquet]" \
+    data.train_files="[$DATA_DIR/train.parquet]" \
+    data.val_files=$DATA_DIR/musique.parquet \
     data.train_data_num=null \
     data.val_data_num=null \
     data.train_batch_size=256 \
