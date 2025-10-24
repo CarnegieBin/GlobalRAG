@@ -8,7 +8,7 @@ To foster **global planning** and **reliable execution**, the framework introduc
 Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRAG** extends its **multi-hop reasoning** capabilities with a **structured reinforcement signal** that explicitly models planning quality.
 
 <p align="center">
-          🤗 <a href="https://huggingface.co/datasets/Carnegie-Bin/GlobalRAG-data">Models</a>&nbsp&nbsp | &nbsp&nbsp📑 <a href="https://arxiv.org/abs/2510.20548">Paper</a>&nbsp&nbsp 
+          🤗 <a href="https://huggingface.co/Carnegie-Bin">Models</a>&nbsp&nbsp | &nbsp&nbsp📑 <a href="https://arxiv.org/abs/2510.20548">Paper</a>&nbsp&nbsp 
 </p>
 
 
