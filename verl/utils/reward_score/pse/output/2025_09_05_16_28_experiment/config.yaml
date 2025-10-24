@@ -1,0 +1,76 @@
+bm25_backend: bm25s
+corpus_path: null
+data_dir: datasets/
+dataset_name: default
+dataset_path: datasets/default
+device: !!python/object/apply:torch.device
+- cuda
+faiss_gpu: false
+framework: hf
+generation_params:
+  do_sample: false
+  max_tokens: 32
+generator_batch_size: 4
+generator_max_input_len: 1024
+generator_model: llama3-8B-instruct
+generator_model_path: YOUR_MODEL_PATH
+gpu_id: 0,1,2,3
+gpu_memory_utilization: 0.85
+index_path: YOUR_INDEX_PATH
+log_info: []
+method2index:
+  bm25: /share/xiaxiaoling/FlashRAG-main/indexes_full/bm25
+  contriever: null
+  e5: /share/xiaxiaoling/FlashRAG-main/indexes_full/bm25
+metric_setting:
+  retrieval_recall_topk: 5
+  tokenizer_name: gpt-4
+metrics:
+- em
+- f1
+- acc
+model2path:
+  bge: BAAI/bge-base-en-v1.5
+  contriever: facebook/contriever
+  e5: /home/work/xiaxiaoling/e5
+  llama2-13B-chat: YOUR_MODEL_PATH
+  llama2-7B-chat: YOUR_MODEL_PATH
+  llama3-8B-instruct: YOUR_MODEL_PATH
+model2pooling:
+  bge: cls
+  contriever: mean
+  dpr: cls
+  e5: mean
+  jina: mean
+openai_setting:
+  api_key: YOUR_KEY
+  base_url: YOUR_URL
+random_sample: false
+rerank_batch_size: 256
+rerank_max_length: 512
+rerank_model_name: e5
+rerank_model_path: /home/work/xiaxiaoling/e5
+rerank_pooling_method: mean
+rerank_topk: 5
+rerank_use_fp16: true
+retrieval_batch_size: 256
+retrieval_cache_path: null
+retrieval_method: bm25
+retrieval_model_path: bm25
+retrieval_pooling_method: mean
+retrieval_query_max_length: 128
+retrieval_topk: 100
+retrieval_use_fp16: true
+save_dir: output/2025_09_05_16_28_experiment
+save_intermediate_data: true
+save_metric_score: true
+save_note: experiment
+save_retrieval_cache: false
+seed: 2019
+split:
+- test
+test_sample_num: null
+use_fid: false
+use_reranker: true
+use_retrieval_cache: false
+use_sentence_transformer: false
