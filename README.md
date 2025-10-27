@@ -171,7 +171,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>29.0</td><td>37.5</td>
   </tr>
   <tr>
-    <td style="white-space: nowrap;">StepSearch-instruct</td>
+    <td style="white-space: nowrap;">StepSearch——instruct</td>
     <td>34.8</td><td>46.9</td>
     <td>36.3</td><td>42.5</td>
     <td>13.4</td><td>21.4</td>
