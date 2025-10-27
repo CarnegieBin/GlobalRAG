@@ -11,28 +11,20 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
           🤗 <a href="https://huggingface.co/Carnegie-Bin">Models</a>&nbsp&nbsp | &nbsp&nbsp📑 <a href="https://arxiv.org/abs/2510.20548">Paper</a>&nbsp&nbsp 
 </p>
 
+## ⭐️ Features
 
-## ⭐️&nbsp;Features
+* 📝 Introduces a novel QA framework that explicitly models global reasoning, enabling the model to plan before retrieving information.
 
+* 🧩 Enhances multi-hop question answering through dense process supervision and reinforcement learning to improve reasoning accuracy and coherence.
 
-- 📝 **Propose a question-answering paradigm**  
-    - Explicitly demonstrates **global planning**  
-    - Enables the model to **learn to plan before retrieving information**
-<br>
-
-- 🧩 **Enhancing multi-hop question answering**  
-    - Integrates **dense process supervision signals**  
-    - Utilizes **reinforcement learning techniques** to improve reasoning**
-<br>
-
-- 📈 **Performance improvements**  
-    - Achieves **+14.2 EM and F1 points** compared to current state-of-the-art methods  
-    - Evaluated on multi-hop QA datasets: **2Wiki, HotpotQA, Musique, Bamboogle, Wikihop**
+* 📈 Achieves **+14.2 EM/F1 improvement** over leading methods on benchmark datasets including **2Wiki, HotpotQA, Musique, Bamboogle, and Wikihop**.
 
 
-<p align="center">
-  <img src="public/description.png" alt="description" />
-</p>
+[//]: # (<p align="center">)
+
+[//]: # (  <img src="public/description.png" alt="description" />)
+
+[//]: # (</p>)
 
 
 
