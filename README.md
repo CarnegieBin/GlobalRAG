@@ -45,7 +45,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
   </tr>
 
   <tr>
-    <td><b>Qwen2.5-3b-Base/Instruct</b></td>
+    <td><b>Qwen2.5-3b</b></td>
     <td colspan="12"></td>
   </tr>
   <tr>
@@ -85,7 +85,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>12.8</td><td>18.4</td>
   </tr>
   <tr>
-    <td>Search-R1-base</td>
+    <td>Search-R1</td>
     <td>26.8</td><td>36.7</td>
     <td>25.6</td><td>29.2</td>
     <td>2.5</td><td>7.3</td>
@@ -94,7 +94,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>15.1</td><td>22.0</td>
   </tr>
   <tr>
-    <td>Search-R1-instruct</td>
+    <td>Search-R1-it</td>
     <td>31.3</td><td>41.5</td>
     <td>31.3</td><td>36.5</td>
     <td>7.7</td><td>13.2</td>
@@ -103,7 +103,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>21.3</td><td>27.9</td>
   </tr>
   <tr>
-    <td>StepSearch-base</td>
+    <td>StepSearch</td>
     <td>29.1</td><td>40.3</td>
     <td>33.5</td><td>38.7</td>
     <td>10.4</td><td>17.7</td>
@@ -112,7 +112,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>23.9</td><td>31.6</td>
   </tr>
   <tr>
-    <td>StepSearch-instruct</td>
+    <td>StepSearch-it</td>
     <td>28.9</td><td>39.9</td>
     <td>31.9</td><td>38.3</td>
     <td>9.5</td><td>16.6</td>
@@ -121,7 +121,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>22.7</td><td>31.3</td>
   </tr>
   <tr>
-    <td><b>GlobalRAG-base</b></td>
+    <td><b>GlobalRAG</b></td>
     <td>30.4</td><td>41.0</td>
     <td>43.1</td><td>48.3</td>
     <td>11.3</td><td>17.4</td>
@@ -130,7 +130,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>27.5</td><td>35.2</td>
   </tr>
   <tr>
-    <td><b>GlobalRAG-instruct</b></td>
+    <td><b>GlobalRAG-it</b></td>
     <td>32.9</td><td>44.2</td>
     <td>42.3</td><td>47.8</td>
     <td>10.8</td><td>18.6</td>
@@ -140,11 +140,11 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
   </tr>
 
   <tr>
-    <td><b>Qwen2.5-7b-Base/Instruct</b></td>
+    <td><b>Qwen2.5-7b</b></td>
     <td colspan="12"></td>
   </tr>
   <tr>
-    <td>Search-R1-base</td>
+    <td>Search-R1</td>
     <td>28.5</td><td>38.3</td>
     <td>26.7</td><td>31.3</td>
     <td>7.1</td><td>12.9</td>
@@ -153,7 +153,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>21.8</td><td>28.6</td>
   </tr>
   <tr>
-    <td>Search-R1-instruct</td>
+    <td>Search-R1-it</td>
     <td>35.9</td><td>47.5</td>
     <td>33.4</td><td>39.5</td>
     <td>9.7</td><td>16.7</td>
@@ -162,7 +162,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>27.6</td><td>35.9</td>
   </tr>
   <tr>
-    <td>StepSearch-base</td>
+    <td>StepSearch</td>
     <td>33.5</td><td>43.5</td>
     <td>39.1</td><td>44.8</td>
     <td>13.1</td><td>22.1</td>
@@ -171,7 +171,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>29.0</td><td>37.5</td>
   </tr>
   <tr>
-    <td>StepSearch-instruct</td>
+    <td>StepSearch-it</td>
     <td>34.8</td><td>46.9</td>
     <td>36.3</td><td>42.5</td>
     <td>13.4</td><td>21.4</td>
@@ -180,7 +180,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>28.2</td><td>37.2</td>
   </tr>
   <tr>
-    <td><b>GlobalRAG-base</b></td>
+    <td><b>GlobalRAG</b></td>
     <td>33.0</td><td>44.4</td>
     <td>47.0</td><td>52.4</td>
     <td>14.2</td><td>22.7</td>
@@ -189,7 +189,7 @@ Built upon [Search-R1](https://github.com/PeterGriffinJin/Search-R1), **GlobalRA
     <td>31.3</td><td>38.6</td>
   </tr>
   <tr>
-    <td><b>GlobalRAG-instruct</b></td>
+    <td><b>GlobalRAG-it</b></td>
     <td>38.2</td><td>50.7</td>
     <td>47.8</td><td>53.2</td>
     <td>14.9</td><td>21.2</td>
