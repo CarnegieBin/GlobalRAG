@@ -139,21 +139,35 @@ For each question-answer sample, it should be a dictionary containing the desire
 
 ```
 data = {
-        "data_source": data_source,
-        "prompt": [{
-            "role": "user",
-            "content": question,
-        }],
-        "ability": "fact-reasoning",
-        "reward_model": {
-            "style": "rule",
-            "ground_truth": solution
+    "data_source": "hotpotqa",
+    "prompt": [{"role": "user", "content": "{Question}"}],
+    "ability": "fact-reasoning",
+    "reward_model": {
+        "ground_truth": {"target": ["265,000"]},
+        "style": "rule"
+    },
+    "metadata": {
+        "hop": "2hop",
+        "plan": {
+            "Q1": [
+                "What is the birth city of Daniela Scalia?",
+                "<A1>"
+            ],
+            "Q2": [
+                "What is the population of <A1>?",
+                "<A2>"
+            ]
         },
-        "extra_info": {
-            'split': split,
-            'index': idx,
+        "graph": {
+            "Q1": {
+                "answer": "Verona"
+            },
+            "Q2": {
+                "answer": "265,000"
+            }
         }
     }
+}
 ```
 
 ### Corpora
