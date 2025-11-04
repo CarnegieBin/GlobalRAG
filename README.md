@@ -1,4 +1,4 @@
-<h1 align="center">🚀🚀🚀 <b>GlobalRAG</b>: Enhancing <b><i>Global</i></b> Reasoning in Multi-hop Question Answering via Reinforcement Learning</h1>
+<h1 align="center">🚀🚀🚀 <b>GlobalRAG</b>: Enhancing <b>Global</b> Reasoning in Multi-hop Question Answering via Reinforcement Learning</h1>
 
 
 
