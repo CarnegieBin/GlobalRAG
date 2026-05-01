@@ -126,9 +126,19 @@ def normalize_parquet(input_path: str, output_path: str):
     # ------------------------------------------------------------------ #
     print(f"  Final features:\n  {ds.features}")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    ds.to_parquet(output_path)
-    status = "FIXED" if changed else "unchanged"
-    print(f"  [{status}] Written to: {output_path}")
+
+    if not changed:
+        # No schema changes needed — copy original file to avoid PyArrow
+        # list-child naming mismatch (element vs item) on write.
+        import shutil
+        shutil.copy2(input_path, output_path)
+        print(f"  [unchanged] Copied to: {output_path}")
+    else:
+        # Write via PyArrow directly to avoid HuggingFace to_parquet() bug
+        # with list child names differing between PyArrow versions.
+        import pyarrow.parquet as pq
+        pq.write_table(ds.data.table, output_path)
+        print(f"  [FIXED] Written to: {output_path}")
 
 
 def main():
