@@ -19,7 +19,7 @@ class Plan_Score(BaseMetric):
         super().__init__(config)
         model_path = "/Users/wanfan01/Downloads/e5"
         model_path = config['e5_model_path']
-        self.sim_model = SentenceTransformer(model_path)
+        self.sim_model = SentenceTransformer(model_path, device='cpu')
 
     def dict2graph(self, graph_dict):
         graph = nx.DiGraph()
