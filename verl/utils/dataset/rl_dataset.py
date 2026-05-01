@@ -122,6 +122,29 @@ class RLHFDataset(Dataset):
         for parquet_file in self.data_files:
             # read parquet files and cache
             dataframe = datasets.load_dataset("parquet", data_files=parquet_file)["train"]
+            # normalize reward_model.ground_truth.target to Sequence(string)
+            # different benchmark parquet files may have target as string or list
+            if 'reward_model' in dataframe.features:
+                target_feature = dataframe.features['reward_model'].feature.get('ground_truth', {}).get('target') \
+                    if hasattr(dataframe.features['reward_model'], 'feature') else \
+                    dataframe.features['reward_model'].get('ground_truth', {}).get('target')
+                if target_feature is not None and not isinstance(target_feature, datasets.Sequence):
+                    new_features = dataframe.features.copy()
+                    new_features['reward_model'] = datasets.Features({
+                        'ground_truth': {
+                            'target': datasets.Sequence(datasets.Value('string'))
+                        },
+                        'style': datasets.Value('string'),
+                    })
+                    dataframe = dataframe.map(
+                        lambda x: {'reward_model': {
+                            'ground_truth': {'target': [x['reward_model']['ground_truth']['target']]
+                                             if isinstance(x['reward_model']['ground_truth']['target'], str)
+                                             else x['reward_model']['ground_truth']['target']},
+                            'style': x['reward_model']['style'],
+                        }},
+                        features=new_features,
+                    )
             dataframes.append(dataframe)
         self.dataframe: datasets.Dataset = datasets.concatenate_datasets(dataframes)
 
