@@ -15,7 +15,9 @@
 Implement a multiprocess PPOCritic
 """
 
+import importlib
 from functools import partial
+from packaging.version import Version
 from typing import Iterable
 
 import torch
@@ -31,11 +33,11 @@ from verl.utils.py_functional import append_to_dict
 from verl.utils.torch_dtypes import PrecisionType
 from verl.utils.torch_functional import masked_mean, broadcast_dict_tensor, split_dict_tensor_into_batches
 from verl.utils.megatron import sequence_parallel as sp_utils
-from verl.utils.megatron.optimizer_config import OptimizerConfig
+from megatron.core.optimizer import OptimizerConfig
 
-from megatron.optimizer import DistributedOptimizer
 from megatron.core import parallel_state as mpu
 from megatron.core.pipeline_parallel import get_forward_backward_func
+from megatron.core.optimizer import DistributedOptimizer
 
 
 class MegatronPPOCritic(BasePPOCritic):
@@ -43,7 +45,7 @@ class MegatronPPOCritic(BasePPOCritic):
     def __init__(self, config, model_config, megatron_config, critic_module: nn.ModuleList,
                  critic_optimizer: DistributedOptimizer, critic_optimizer_config: OptimizerConfig):
         super().__init__(config=config)
-
+        self._validate_config(config)
         self.model_config = model_config
         self.megatron_config = megatron_config
 
@@ -64,15 +66,9 @@ class MegatronPPOCritic(BasePPOCritic):
             'reduce_grads_use_alltoall': False
         })
 
-        if self.config.kl_ctrl.type == 'fixed':
-            self.kl_ctrl = core_algos.FixedKLController(kl_coef=self.config.kl_ctrl.kl_coef)
-        elif self.config.kl_ctrl.type == 'adaptive':
-            assert self.config.kl_ctrl.horizon > 0, f'horizon must be larger than 0. Got {self.config.kl_ctrl.horizon}'
-            self.kl_ctrl = core_algos.AdaptiveKLController(init_kl_coef=self.config.kl_ctrl.kl_coef,
-                                                           target_kl=self.config.kl_ctrl.target_kl,
-                                                           horizon=self.config.kl_ctrl.horizon)
-        else:
-            raise NotImplementedError
+    def _validate_config(self, config) -> None:
+        """Validate config options not implemented for Megatron backend"""
+        assert config.get('ulysses_sequence_parallel_size', 1) == 1
 
     def compute_values(self, data: DataProto) -> DataProto:
         # data.batch = data.batch.to(self.critic_module.module.device)
@@ -118,7 +114,7 @@ class MegatronPPOCritic(BasePPOCritic):
                               group=mpu.get_pipeline_model_parallel_group())
         # split into micro-batches
         data.batch['attention_mask'] = data.batch['attention_mask'].to(bool)
-        batches = split_dict_tensor_into_batches(data.batch, batch_size=self.config.ppo_micro_batch_size)
+        batches = split_dict_tensor_into_batches(data.batch, batch_size=self.config.ppo_micro_batch_size_per_gpu)
         n_micro_batch = len(batches)
         seq_len = batches[0]['input_ids'].shape[1]
 
@@ -134,7 +130,7 @@ class MegatronPPOCritic(BasePPOCritic):
 
         def loss_func(output, data, meta_info):
             if forward_only:
-                return 1.0, {'vpreds': output.logits}
+                return 1.0, {'vpreds': output}
 
             responses = data['responses']
             attention_mask = data['attention_mask']
@@ -142,22 +138,22 @@ class MegatronPPOCritic(BasePPOCritic):
             returns = data['returns']
             response_length = responses.size(1)
 
-            eos_mask = attention_mask[:, -response_length:]
+            response_mask = attention_mask[:, -response_length:]
 
             cliprange_value = self.config.cliprange_value
 
-            vpreds = output.logits  # (bs, sequence_length)
+            vpreds = output  # (bs, sequence_length)
             vpreds = vpreds[:, -response_length - 1:-1]
 
             vf_loss, vf_clipfrac = core_algos.compute_value_loss(vpreds=vpreds,
                                                                  values=values,
                                                                  returns=returns,
-                                                                 eos_mask=eos_mask,
+                                                                 response_mask=response_mask,
                                                                  cliprange_value=cliprange_value)
             stats = {
                 'critic/vf_loss': vf_loss.detach().item(),
                 'critic/vf_clipfrac': vf_clipfrac.detach().item(),
-                'critic/vpred_mean': masked_mean(vpreds, eos_mask).detach().item(),
+                'critic/vpred_mean': masked_mean(vpreds, response_mask).detach().item(),
             }
 
             return vf_loss, stats
@@ -167,7 +163,15 @@ class MegatronPPOCritic(BasePPOCritic):
             input_ids = batch['input_ids']
             attention_mask = batch['attention_mask']
             position_ids = batch['position_ids']
-            output = model(input_ids=input_ids, attention_mask=attention_mask, position_ids=position_ids)
+            from verl.models.mcore import gptmodel_forward
+
+            output = gptmodel_forward(model,
+                                      input_ids,
+                                      attention_mask,
+                                      position_ids,
+                                      sequence_parallel=self.megatron_config.sequence_parallel,
+                                      value_model=True)
+
             return output, partial(loss_func, data=batch, meta_info={})
 
         # batch should be a list of batches inside micro-batches
@@ -181,9 +185,7 @@ class MegatronPPOCritic(BasePPOCritic):
                 data_iterator=batch_generator,
                 model=self.critic_module,
                 num_microbatches=n_micro_batch,
-                input_shapes=input_shapes,  # must set for flash-attn sequence packing
-                seq_length=self.config.ppo_micro_batch_size * seq_len,  # no use when input_shapes was set
-                hidden_size=self.model_config.hidden_size,  # no use when input_shapes was set
+                seq_length=self.config.ppo_micro_batch_size_per_gpu * seq_len,  # no use when input_shapes was set
                 micro_batch_size=1,  # no use when input_shapes was set
                 forward_only=forward_only,
             )
@@ -193,8 +195,7 @@ class MegatronPPOCritic(BasePPOCritic):
                 data_iterator=batch_generator,
                 model=self.critic_module,
                 num_microbatches=n_micro_batch,
-                seq_length=self.config.ppo_micro_batch_size * seq_len,  # in use for pp = 1
-                hidden_size=self.model_config.hidden_size,  # in use for pp = 1
+                seq_length=self.config.ppo_micro_batch_size_per_gpu * seq_len,  # in use for pp = 1
                 micro_batch_size=1,  # in use for pp = 1
                 forward_only=forward_only,
             )
@@ -209,12 +210,12 @@ class MegatronPPOCritic(BasePPOCritic):
             self.critic_optimizer.zero_grad()
             # use use_contiguous_buffers_in_local_ddp and no overlap_dp_param_comm
             for chunk in self.critic_module:
-                chunk.zero_grad_buffer(zero_buffer=(not self.critic_optimizer_config.use_distributed_optimizer))
+                chunk.zero_grad_buffer()
 
             metric_micro_batch = self.forward_backward_batch(data)
 
-            update_successful, grad_norm, num_zeros_in_grad = self.critic_optimizer.step(
-                self.megatron_config, self.megatron_config.timers)
+            update_successful, grad_norm, num_zeros_in_grad = self.critic_optimizer.step()
+
             if update_successful:
                 # allgather already execute in optimizer.step in new megatron
                 pass

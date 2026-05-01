@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import time
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Any, Tuple, Optional
 
 import ray
 from ray.util import list_named_actors
@@ -44,6 +45,26 @@ def func_generator(self, method_name, dispatch_fn, collect_fn, execute_fn, block
         return output
 
     return func
+
+
+def sort_placement_group_by_node_ip(pgs: List[PlacementGroup]) -> List[PlacementGroup]:
+    """
+    Sort the placement groups by node ip, all bundles in a single placement group should be on the same node.
+
+    FSDPCheckpointManager saves sharded model states and optimizer states in local storage, which requires RANK
+    to be consistent across nodes when resume from checkpoint.
+
+    With this function, if there's only one resource pool and there's no node change, RANK should be consistent
+    across nodes in multiple ray jobs, even if the whole ray cluster is restarted.
+    """
+    node_ip = {node["NodeID"]: node["NodeManagerAddress"] for node in ray.nodes()}
+    pg_ip = {}
+    for pg in pgs:
+        specs = ray._private.state.state.placement_group_table(pg.id)
+        # all bunles should be on the same node
+        node_id = specs["bundles_to_node_id"][0]
+        pg_ip[pg.id] = node_ip[node_id]
+    return sorted(pgs, key=lambda pg: pg_ip[pg.id])
 
 
 class RayResourcePool(ResourcePool):
@@ -182,10 +203,12 @@ class RayWorkerGroup(WorkerGroup):
                  name_prefix: str = None,
                  detached=False,
                  worker_names=None,
+                 ray_wait_register_center_timeout: int = 300,
                  **kwargs) -> None:
         super().__init__(resource_pool=resource_pool, **kwargs)
         self.ray_cls_with_init = ray_cls_with_init
         self.name_prefix = get_random_string(length=6) if name_prefix is None else name_prefix
+        self._ray_wait_register_center_timeout = ray_wait_register_center_timeout
 
         if worker_names is not None:
             assert self._is_init_with_detached_workers
@@ -224,8 +247,8 @@ class RayWorkerGroup(WorkerGroup):
         num_gpus = 1 / resource_pool.max_collocate_count
 
         rank = -1
-        for pg_idx, local_world_size in enumerate(resource_pool.store):
-            pg = pgs[pg_idx]
+        local_world_size = resource_pool.store[0]
+        for pg_idx, pg in enumerate(sort_placement_group_by_node_ip(pgs)):
             assert local_world_size <= pg.bundle_count, \
                 f"when generating for {self.name_prefix}, for the "
             for local_rank in range(local_world_size):
@@ -265,13 +288,30 @@ class RayWorkerGroup(WorkerGroup):
 
                 if rank == 0:
                     register_center_actor = None
-                    for _ in range(120):
-                        if f"{self.name_prefix}_register_center" not in list_named_actors():
-                            time.sleep(1)
-                        else:
-                            register_center_actor = ray.get_actor(f"{self.name_prefix}_register_center")
+                    actor_name = f"{self.name_prefix}_register_center"
+                    start_time = time.time()
+
+                    while time.time() - start_time < self._ray_wait_register_center_timeout:
+                        if actor_name in list_named_actors():
+                            register_center_actor = ray.get_actor(actor_name)
                             break
-                    assert register_center_actor is not None, f"failed to get register_center_actor: {self.name_prefix}_register_center in {list_named_actors(all_namespaces=True)}"
+
+                        elapsed = int(time.time() - start_time)
+                        if elapsed % 30 == 0:
+                            logging.warning(
+                                f"Waiting for register center actor {actor_name} to be ready. "
+                                f"Elapsed time: {elapsed} seconds out of {self._ray_wait_register_center_timeout} seconds."
+                            )
+                        time.sleep(1)
+
+                    if register_center_actor is None:
+                        raise TimeoutError(
+                            f"Failed to get register_center_actor {actor_name} in {list_named_actors(all_namespaces=True)} "
+                            f"for {self._ray_wait_register_center_timeout} seconds. "
+                            "Ensure that any lingering Ray resources from previous runs are cleaned up (e.g., by restarting the Ray cluster), "
+                            "or adjust the waiting time by modifying the config `trainer.ray_wait_register_center_timeout`."
+                        )
+
                     rank_zero_info = ray.get(register_center_actor.get_rank_zero_info.remote())
                     self._master_addr, self._master_port = rank_zero_info['MASTER_ADDR'], rank_zero_info['MASTER_PORT']
                     # print(f"rank_zero_info: {rank_zero_info}")
@@ -317,7 +357,7 @@ class RayWorkerGroup(WorkerGroup):
         return new_worker_group_dict
 
     def execute_rank_zero_sync(self, method_name: str, *args, **kwargs):
-        return ray.get(self.execute_all_async(method_name, **args, **kwargs))
+        return ray.get(self.execute_rank_zero_async(method_name, *args, **kwargs))
 
     def execute_rank_zero_async(self, method_name: str, *args, **kwargs):
         remote_call = getattr(self._workers[0], method_name)
@@ -333,8 +373,8 @@ class RayWorkerGroup(WorkerGroup):
         return ray.get(self.execute_all_async(method_name, *args, **kwargs))
 
     def execute_all_async(self, method_name: str, *args, **kwargs):
-        # 这里我们假设，如果 args 和 kwargs 里面所有的参数都是 list，且所有的 list 长度都与 len(self._workers) 一致的话，我们会把
-        # list 中的每一个分别发到对应的 worker 上去
+        # Here, we assume that if all arguments in args and kwargs are lists, and their lengths match len(self._workers),
+        # we'll distribute each element in these lists to the corresponding worker
         # print(f"execute_all_async: method {method_name}({args}, {kwargs})")
         length = len(self._workers)
         if all(isinstance(arg, list) for arg in args) and all(isinstance(kwarg, list) for kwarg in kwargs.values()):
@@ -445,6 +485,7 @@ def create_colocated_worker_cls(class_dict: dict[str, RayClassWithInitArgs]):
             for key, user_defined_cls in cls_dict.items():
                 user_defined_cls = _unwrap_ray_remote(user_defined_cls)
                 # directly instantiate the class without remote
+                # in worker class, e.g. <verl.single_controller.base.worker.Worker> when DISABLE_WORKER_INIT == 1 it will return immediately
                 with patch.dict(os.environ, {'DISABLE_WORKER_INIT': '1'}):
                     self.worker_dict[key] = user_defined_cls(*init_args_dict[key].get('args', ()),
                                                              **init_args_dict[key].get('kwargs', {}))

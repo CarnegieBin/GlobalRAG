@@ -17,7 +17,7 @@ the class for Worker
 import os
 import socket
 from dataclasses import dataclass
-from verl.single_controller.base.decorator import register, Dispatch, Execute
+from .decorator import register, Dispatch, Execute
 
 
 @dataclass
@@ -25,6 +25,7 @@ class DistRankInfo:
     tp_rank: int
     dp_rank: int
     pp_rank: int
+    cp_rank: int
 
 
 @dataclass
@@ -32,6 +33,7 @@ class DistGlobalInfo:
     tp_size: int
     dp_size: int
     pp_size: int
+    cp_size: int
 
 
 class WorkerHelper:
@@ -42,10 +44,8 @@ class WorkerHelper:
             if os.getenv("WG_BACKEND", None) == "ray":
                 import ray
                 return ray._private.services.get_node_ip_address()
-            elif os.getenv("WG_BACKEND", None) == "torch_rpc":
-                from verl.single_controller.torchrpc.k8s_client import get_ip_addr
-                return get_ip_addr()
-            return None
+            else:
+                raise NotImplementedError("WG_BACKEND now just support ray mode.")
 
         host_ipv4 = os.getenv("MY_HOST_IP", None)
         host_ipv6 = os.getenv("MY_HOST_IPV6", None)
@@ -81,6 +81,7 @@ class WorkerMeta:
 
 # we assume that in each WorkerGroup, there is a Master Worker
 class Worker(WorkerHelper):
+    """A (distributed) worker."""
 
     def __new__(cls, *args, **kwargs):
         instance = super().__new__(cls)
@@ -119,6 +120,19 @@ class Worker(WorkerHelper):
     def __init__(self, cuda_visible_devices=None) -> None:
         # construct a meta from envrionment variable. Note that the import must be inside the class because it is executed remotely
         import os
+
+        ###
+        # [SUPPORT AMD: torch]
+        import torch
+        ###
+
+        ###
+        # [SUPPORT AMD: torch]
+        if "AMD" in torch.cuda.get_device_name():
+            os.environ['CUDA_VISIBLE_DEVICES'] = os.environ.get('ROCR_VISIBLE_DEVICES')
+            os.environ['LOCAL_RANK'] = os.environ.get('RAY_LOCAL_RANK')
+        ###
+
         world_size = int(os.environ['WORLD_SIZE'])
         rank = int(os.environ['RANK'])
         self._rank = rank
@@ -129,6 +143,18 @@ class Worker(WorkerHelper):
 
         local_world_size = int(os.getenv("LOCAL_WORLD_SIZE", "1"))
         local_rank = int(os.getenv("LOCAL_RANK", "0"))
+
+        ###
+        # [SUPPORT AMD: torch]
+        if "AMD" in torch.cuda.get_device_name():
+            self.local_rank = int(os.environ['LOCAL_RANK'])
+        ###
+
+        ###
+        # [SUPPORT AMD: torch]
+        if "AMD" in torch.cuda.get_device_name():
+            cuda_visible_devices = str(local_rank)
+        ###
 
         store = {
             '_world_size': world_size,
@@ -143,6 +169,13 @@ class Worker(WorkerHelper):
 
         meta = WorkerMeta(store=store)
         self._configure_with_meta(meta=meta)
+
+        ###
+        # [SUPPORT AMD: torch]
+        # torch.cuda.set_device(local_rank)
+        if "AMD" in torch.cuda.get_device_name():
+            torch.cuda.set_device(int(cuda_visible_devices))
+        ###
 
     def _configure_with_meta(self, meta: WorkerMeta):
         """
