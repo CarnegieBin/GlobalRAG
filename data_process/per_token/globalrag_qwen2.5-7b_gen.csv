@@ -1,4 +1,4 @@
-step,global-rag__qwen2.5-7b__2025-09-30-timing_per_token_ms/gen_step
+step,gen_step
 1,0.318602201247438
 2,0.3091128881004505
 3,0.3092143309938942

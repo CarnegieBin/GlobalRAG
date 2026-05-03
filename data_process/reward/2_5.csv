@@ -1,4 +1,4 @@
-step,global-rag_qwen2.5-3b-it_plan_0.25-val/test_score/bamboogle_step
+step,bamboogle_step
 0,0.2
 10,0.264
 20,0.192
@@ -18,3 +18,4 @@ step,global-rag_qwen2.5-3b-it_plan_0.25-val/test_score/bamboogle_step
 160,0.36
 170,0.352
 180,0.232
+190,0.091

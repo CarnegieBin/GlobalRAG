@@ -77,41 +77,55 @@ def download_train_data(save_dir):
             except Exception as e:
                 print(f"Failed to load {file_name}: {e}")
 
-    df = pd.concat(file_df)
+    if not file_df:
+        print("No .jsonl files found in the directory.")
+        return
+
+    df = pd.concat(file_df, ignore_index=True)
     rets = []
 
     for idx, row in df.iterrows():
         ret = {
-        "ability": "fact-reasoning",
-        "data_source": "globalrag",
-        "extra_info": {
-            "index": idx,
-            "split": "train",
-            "support_docs": []
-        },
-        "golden_answers": row["golden_answers"],
-        "id": idx,
-        "prompt": [{
-            'content': template + "\n" + "Question:" + str(row["question"]) + "\n",
-            'role': 'user'
-        }],
-        "question": str(row["question"]),
-        "reward_model": {
-            "ground_truth": {"target": row["golden_answers"]},
-            "style": ""
+            "ability": "fact-reasoning",
+            "data_source": "globalrag",
+            "extra_info": {
+                "index": idx,
+                "split": "train",
+                "support_docs": []
+            },
+            "golden_answers": row["golden_answers"],
+            "id": idx,
+            "prompt": [{
+                'content': template + "\n" + "Question:" + str(row["question"]) + "\n",
+                'role': 'user'
+            }],
+            "question": str(row["question"]),
+            "reward_model": {
+                "ground_truth": {"target": row["golden_answers"]},
+                "style": ""
+            }
         }
-    }
         rets.append(ret)
 
-    df = pd.DataFrame(rets)
-    df.to_json(os.path.join(save_dir, "data.jsonl"))
+    out_df = pd.DataFrame(rets)
+    out_path = os.path.join(save_dir, "train.parquet")
+    out_df.to_parquet(out_path, index=False)
+    print(f"Saved {len(rets)} records to {out_path}")
 
 
 if __name__ == "__main__":
+    import argparse
 
-    save_dir = "./GlobalRAG-data"
+    parser = argparse.ArgumentParser(description="Convert jsonl files to train.parquet")
+    parser.add_argument(
+        "data_dir",
+        nargs="?",
+        default="/home/work/tcbian/GlobalRAG/data",
+        help="Directory containing .jsonl files (default: /home/work/tcbian/GlobalRAG/data)"
+    )
+    args = parser.parse_args()
 
-    download_train_data(save_dir)
+    download_train_data(args.data_dir)
 
 
 

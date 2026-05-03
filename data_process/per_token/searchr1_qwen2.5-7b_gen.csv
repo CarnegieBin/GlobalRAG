@@ -1,4 +1,4 @@
-step,searchr1_qwen2.5-7b_2025-12-16-timing_per_token_ms/gen_step
+step,gen_step
 1,0.2600891586219334
 2,0.2489944678982411
 3,0.2460039988723664

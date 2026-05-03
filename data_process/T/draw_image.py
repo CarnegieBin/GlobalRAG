@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 
 # 要读取的文件及对应标签
 files = {
-    "./3b.csv": "Qwen2.5-3B",
-    "./7b.csv": "Qwen2.5-7B",
+    "./50.csv": "T=50",
+    "./100.csv": "T=100",
 }
 
 plt.figure(figsize=(8, 6))
@@ -14,8 +14,8 @@ for filename, label in files.items():
     df = pd.read_csv(filename)
 
     # 每 3 步取一个点 .iloc[::3]
-    steps = df["step"].iloc[:180]
-    rewards = df["rewards"].iloc[:180]
+    steps = df["step"].iloc[:210]
+    rewards = df["rewards"].iloc[:210]
 
     plt.plot(
         steps,
@@ -28,12 +28,12 @@ for filename, label in files.items():
 
 plt.xlabel(
     "Step",
-    fontsize=28,
+    fontsize=16,
     fontweight="bold"
 )
 plt.ylabel(
     "Training Rewards",
-    fontsize=28,
+    fontsize=16,
     fontweight="bold"
 )
 
@@ -41,8 +41,8 @@ plt.xticks(fontsize=16, fontweight="bold")
 plt.yticks(fontsize=16, fontweight="bold")
 
 plt.legend(
-    fontsize=32,      # 图例文字大小
-    loc="upper right" # 明确右上角（可选）
+    fontsize=16,      # 图例文字大小
+    loc="lower left" # 明确右上角（可选）
 )
 plt.grid(True)
 plt.tight_layout()

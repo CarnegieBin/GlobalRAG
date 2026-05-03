@@ -3,9 +3,9 @@ import matplotlib.pyplot as plt
 
 # 要读取的文件及对应标签
 files = {
-    "1.csv": "Top-k 1",
-    "3.csv": "Top-k 3",
-    "5.csv": "Top-k 5",
+    "1.csv": "GroupSize=1",
+    "3.csv": "GroupSize=3",
+    "5.csv": "GroupSize=5",
 }
 
 plt.figure(figsize=(8, 6))
@@ -14,8 +14,8 @@ for filename, label in files.items():
     df = pd.read_csv(filename)
 
     # 每 3 步取一个点 .iloc[::3]
-    steps = df["step"]
-    rewards = df["rewards"]
+    steps = df["step"].iloc[:180]
+    rewards = df["rewards"].iloc[:180]
 
     plt.plot(
         steps,
@@ -47,7 +47,7 @@ plt.legend(
 plt.grid(True)
 plt.tight_layout()
 plt.savefig(
-    "appendix_retrieval.pdf",
+    "appendix_groupsize.pdf",
     format="pdf",
     bbox_inches="tight"
 )

@@ -56,7 +56,7 @@ def em_check(pred, golden_answers):
     return score
 
 def main():
-    input_file = "./searchr1_hotpotqa_qwen_3b_it_wf/0.jsonl"
+    input_file = "bamboogle.jsonl"
     total = 0
     correct = 0
     df = pd.read_json(input_file, lines=True)

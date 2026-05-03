@@ -13,7 +13,7 @@ export RAY_TMPDIR="/ssd1/tcbian/ray_tmp"
 mkdir -p $RAY_TMPDIR
 export BASE_MODEL="/ssd2/llm_models/Qwen3-8B"
 export EXPERIMENT_NAME="Qwen3-8B-GlobalRAG"
-export CHECKPOINT_DIR="/ssd1/tcbian/GlobalRAG"
+export CHECKPOINT_DIR="/ssd1/tcbian/GlobalRAG_data"
 # To resume training, set RESUME_STEP to the global_step number of the checkpoint to resume from,
 # and set actor_rollout_ref.model.path to the corresponding checkpoint path, e.g.:
 # export RESUME_STEP=100

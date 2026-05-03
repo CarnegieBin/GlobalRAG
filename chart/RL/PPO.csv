@@ -1,4 +1,4 @@
-step,global_rag_train-ppo-2025-12-12-critic/rewards/mean_step
+step,rewards
 1,0.9993478655815125
 2,1.018084049224854
 3,1.021782159805298

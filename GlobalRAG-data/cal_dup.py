@@ -3,6 +3,18 @@ import re
 import string
 import pandas as pd
 
+
+def extract_plan(output_str):
+    """Extract content between <plan> and </plan>."""
+    if not isinstance(output_str, str):
+        return None
+    pattern = r"<plan>(.*?)</plan>"
+    match = re.search(pattern, output_str, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    return None
+
+
 def extract_solution(solution_str):
     """Extract the equation from the solution string."""
     # Remove everything before the first "Assistant:"
@@ -57,30 +69,62 @@ def em_check(pred, golden_answers):
 
 def main():
     input_file = "bamboogle.jsonl"
-    total = 0
-    correct = 0
     df = pd.read_json(input_file, lines=True)
     print("file load successfully")
-    print(len(df))
+    print("Total rows:", len(df))
 
-    for idx, row in df.iterrows():  # row 是 Series
-        data = row.to_dict()  # 转成字典
-        output_text = data.get("output", "")
-        golden_answers = data.get("golden_answer", [])
+    # ===============================
+    # 1. 按 inputs 归类
+    # ===============================
+    grouped = df.groupby("input")
 
-        pred_answer = extract_solution(output_text)
-        if pred_answer is None:
-            continue
+    total_after_dedup = 0
+    correct_after_dedup = 0
 
-        total += 1
-        correct += em_check(pred_answer, golden_answers)
+    for input_value, group_df in grouped:
+        # plan -> representative row
+        plan_map = {}
 
-    if total == 0:
-        print("No valid predictions found.")
+        for _, row in group_df.iterrows():
+            data = row.to_dict()
+            output_text = data.get("output", "")
+            golden_answers = data.get("golden_answer", [])
+
+            plan = extract_plan(output_text)
+            if plan is None:
+                continue
+
+            # 只保留第一次出现的 plan（去重）
+            if plan not in plan_map:
+                plan_map[plan] = data
+
+        # ===============================
+        # 2. 在去重后的 plan 上计算 EM
+        # ===============================
+        for plan, data in plan_map.items():
+            output_text = data.get("output", "")
+            golden_answers = data.get("golden_answer", [])
+
+            pred_answer = extract_solution(output_text)
+            if pred_answer is None:
+                continue
+
+            total_after_dedup += 1
+            correct_after_dedup += em_check(pred_answer, golden_answers)
+
+    # ===============================
+    # 3. 输出统计结果
+    # ===============================
+    if total_after_dedup == 0:
+        print("No valid predictions after deduplication.")
     else:
-        accuracy = correct / len(df)
-        print(f"Total: {total}, Correct: {correct}, EM Accuracy: {accuracy:.4f}")
+        accuracy = correct_after_dedup / total_after_dedup
+        print(
+            f"After deduplication by inputs + plan:\n"
+            f"Total: {total_after_dedup}, "
+            f"Correct: {correct_after_dedup}, "
+            f"EM Accuracy: {accuracy:.4f}"
+        )
 
 if __name__ == "__main__":
     main()
-
